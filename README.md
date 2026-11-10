@@ -27,6 +27,7 @@ Outros comandos:
 | Comando | O que faz |
 |---|---|
 | `npm test` | 22 testes: indicadores, backtester, pesos, corretor simulado, protocolo MT5, mesa completa |
+| `npm run simulate -- XAUUSD 90` | Corre a mesa completa (todos os agentes) 90 dias no simulador e imprime o resumo |
 | `npm run backtest -- 6000` | Backtest de todas as estratégias em dados sintéticos |
 | `npm run build && npm start` | Compila o painel e serve tudo em `http://127.0.0.1:8787` |
 

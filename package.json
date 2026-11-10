@@ -10,7 +10,8 @@
     "start": "tsx server/index.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "backtest": "tsx server/backtest/cli.ts"
+    "backtest": "tsx server/backtest/cli.ts",
+    "simulate": "tsx server/simulate.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.7.0",
