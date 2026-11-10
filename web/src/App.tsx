@@ -1,7 +1,9 @@
-import { Pause, Play } from 'lucide-react';
+import { LogOut, Pause, Play } from 'lucide-react';
 import { useState } from 'react';
 import type { AppState } from '../../shared/types';
 import { AgentRoom } from './AgentRoom';
+import { API_BASE, signOut, useSession } from './auth';
+import { Login } from './Login';
 import { num, price, sideLabel, signed, tone } from './format';
 import { Equity, History, News, Positions, Risk, Strategies } from './Panels';
 import { PriceChart } from './PriceChart';
@@ -17,7 +19,7 @@ const TABS = [
 ] as const;
 type Tab = (typeof TABS)[number]['id'];
 
-function TopBar({ state, desk }: { state: AppState; desk: DeskApi }) {
+function TopBar({ state, desk, email }: { state: AppState; desk: DeskApi; email?: string }) {
   const { account } = state;
   const venue = state.mode === 'paper'
     ? 'Simulador, dados sintéticos'
@@ -43,6 +45,12 @@ function TopBar({ state, desk }: { state: AppState; desk: DeskApi }) {
         {state.tradingEnabled ? <Pause size={15} aria-hidden /> : <Play size={15} aria-hidden />}
         {state.tradingEnabled ? 'Pausar negociação' : 'Retomar negociação'}
       </button>
+      {email && (
+        <button type="button" className="btn" title={email} onClick={() => signOut()}>
+          <LogOut size={15} aria-hidden />
+          Sair
+        </button>
+      )}
     </header>
   );
 }
@@ -77,21 +85,36 @@ function Watchlist({ state, symbol, onSelect }: { state: AppState; symbol: strin
 }
 
 export function App() {
-  const desk = useDesk();
+  const session = useSession();
+  const signedIn = session.status === 'signedIn' || session.status === 'open';
+  const desk = useDesk(signedIn);
   const { state } = desk;
   const [symbol, setSymbol] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>('positions');
 
-  if (!state) {
-    return <main className="boot"><p>{desk.online ? 'A carregar a mesa…' : 'A ligar ao servidor de agentes…'}</p></main>;
+  if (session.status === 'checking') return <main className="boot"><p>A verificar a sessão…</p></main>;
+  if (session.status === 'unreachable') {
+    return (
+      <main className="boot">
+        <div>
+          <p className="strong">Sem ligação ao servidor de agentes.</p>
+          <p>
+            Destino: {API_BASE || location.origin}. Este painel é só a interface; o servidor de agentes tem de estar a
+            correr nesse endereço. Se estiver noutro sítio, defina VITE_API_URL e volte a publicar.
+          </p>
+        </div>
+      </main>
+    );
   }
+  if (session.status === 'signedOut') return <Login />;
+  if (!state) return <main className="boot"><p>{desk.online ? 'A carregar a mesa…' : 'A ligar ao servidor de agentes…'}</p></main>;
   const current = state.symbols.find((s) => s.symbol === symbol) ?? state.symbols[0];
   const view = state.consensus[current.symbol];
   const tick = state.ticks[current.symbol];
 
   return (
     <div className="shell">
-      <TopBar state={state} desk={desk} />
+      <TopBar state={state} desk={desk} email={session.status === 'signedIn' ? session.email : undefined} />
       {!desk.online && <p className="banner" role="alert">Ligação ao servidor perdida. A tentar de novo…</p>}
       {!state.tradingEnabled && <p className="banner" role="status">Negociação em pausa. Os agentes continuam a analisar, mas não enviam ordens.</p>}
       <Watchlist state={state} symbol={current.symbol} onSelect={setSymbol} />

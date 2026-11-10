@@ -26,7 +26,7 @@ Outros comandos:
 
 | Comando | O que faz |
 |---|---|
-| `npm test` | 22 testes: indicadores, backtester, pesos, corretor simulado, protocolo MT5, mesa completa |
+| `npm test` | 30 testes: indicadores, backtester, pesos, corretor simulado, protocolo MT5, mesa completa |
 | `npm run simulate -- XAUUSD 90` | Corre a mesa completa (todos os agentes) 90 dias no simulador e imprime o resumo |
 | `NODE_USE_ENV_PROXY=1 npm run live -- XAUUSD 30 60` | Mesa completa 30 min com **cotações reais** (Swissquote) e execução simulada, velas de 60 s. `--force` põe as estratégias do banco a votar |
 | `npm run backtest -- 6000` | Backtest de todas as estratégias em dados sintéticos |
@@ -39,6 +39,50 @@ a execução dentro do processo: nenhuma ordem sai para um corretor. O históric
 indicadores vem do Yahoo; no ouro e na prata é o contrato de futuros deslocado para o preço à vista,
 por isso as velas antigas são uma aproximação. `MTAI_TIMEFRAME_SEC` muda o período das velas
 (por omissão 900). Atrás de um proxy, o Node precisa de `NODE_USE_ENV_PROXY=1`.
+
+## Publicar: painel no Vercel, servidor noutro sítio, login no Neon
+
+O Vercel só serve ficheiros estáticos e funções de curta duração. O servidor de agentes é um processo
+que fica sempre ligado e usa WebSocket, por isso **não corre no Vercel**: publicar só o repositório lá
+dá `404` em `/api` e falha em `wss://.../ws`. A divisão é:
+
+| Peça | Onde corre |
+|---|---|
+| Painel (`web/`) | Vercel, com `vercel.json` já incluído |
+| Servidor de agentes (`server/`) | Uma máquina sempre ligada: o PC ou VPS Windows onde está o MT5, ou um serviço como Railway, Fly.io ou Render |
+| Contas, sessões e registo de auditoria | Neon (Postgres), plano gratuito |
+
+Passos:
+
+1. **Neon.** Crie um projeto e copie a ligação "pooled" para `DATABASE_URL` no servidor. As tabelas são
+   criadas no arranque.
+2. **Operador.** No servidor: `npm run user -- add o-seu@email.com` e escolha uma palavra-passe com 12
+   ou mais caracteres. Não existe página de registo: só quem tem acesso ao servidor cria contas.
+3. **Servidor.** Exponha-o por HTTPS (Caddy, nginx ou Cloudflare Tunnel) num endereço como
+   `https://api.mtbot.dev` e defina `MTAI_ALLOWED_ORIGINS=https://mtbot.dev`, `MTAI_TRUST_PROXY=1`,
+   `MTAI_HSTS=true`.
+4. **Vercel.** Em Settings > Environment Variables defina `VITE_API_URL=https://api.mtbot.dev` e volte a
+   publicar. O Vercel não precisa de `DATABASE_URL` nem de nenhum segredo.
+
+### Segurança
+
+- **Sem login não há acesso remoto.** O servidor recusa arrancar fora de `127.0.0.1` se `DATABASE_URL`
+  não estiver definido.
+- **Palavras-passe** guardadas com scrypt (32 MB por tentativa) e sal aleatório; nunca em claro.
+- **Sessões** de 12 horas. O token tem 256 bits aleatórios e a base de dados guarda só o seu hash, por
+  isso uma cópia roubada da base de dados não dá acesso. Mudar a palavra-passe termina todas as sessões.
+- **Força bruta:** 10 tentativas de login por minuto por endereço e bloqueio da conta durante 15 minutos
+  após 5 palavras-passe erradas. A resposta é igual para email desconhecido, palavra-passe errada e
+  conta bloqueada.
+- **API e WebSocket** exigem o token em todos os pedidos; o WebSocket não envia nada antes de o validar
+  e fecha quando a sessão acaba. Só as origens em `MTAI_ALLOWED_ORIGINS` passam no CORS.
+- **SQL** sempre parametrizado. Cabeçalhos CSP, `X-Frame-Options`, `nosniff` e HSTS no servidor e no Vercel.
+- **Auditoria:** entradas, falhas, pausas, alterações de risco e fechos manuais ficam na tabela `audit_log`.
+- A ponte do MT5 (`/bridge/sync`) tem o seu próprio segredo (`MTAI_BRIDGE_TOKEN`) e limite de pedidos.
+
+Limites conhecidos: o token fica no `localStorage` do browser (a CSP só permite scripts do próprio
+site, mas um script malicioso que lá chegasse poderia lê-lo); não há segundo fator de autenticação; o
+limite de pedidos é por processo e não sobrevive a um reinício.
 
 ## Ligar ao MetaTrader 5 (VT Markets ou outro)
 
@@ -65,7 +109,7 @@ HTTP uma vez por segundo. Não depende de serviços de terceiros.
 Com `MTAI_TRADING_ENABLED=false` os agentes analisam e decidem, mas não enviam ordens. Quando estiver
 satisfeito com o que vê numa conta demo, use o botão "Retomar negociação" no painel ou mude a variável.
 
-O servidor escuta só em `127.0.0.1` e o painel não tem autenticação: não o exponha à internet.
+Sem `DATABASE_URL` o servidor escuta só em `127.0.0.1` e não tem login; para acesso remoto veja a secção sobre publicação.
 
 ## Os agentes
 

@@ -1,6 +1,7 @@
 import { CandlestickSeries, createChart, LineStyle, type IPriceLine, type ISeriesApi, type UTCTimestamp } from 'lightweight-charts';
 import { useEffect, useRef } from 'react';
 import type { Candle, Position, SymbolSpec } from '../../shared/types';
+import { api } from './auth';
 import type { BarListener } from './useDesk';
 
 const token = (name: string) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
@@ -43,8 +44,8 @@ export function PriceChart({ spec, positions, subscribeBars }: Props) {
 
     let last = 0;
     let cancelled = false;
-    fetch(`/api/candles?symbol=${spec.symbol}`)
-      .then((r) => r.json())
+    api(`/api/candles?symbol=${spec.symbol}`)
+      .then((r) => (r.ok ? r.json() : []))
       .then((candles: Candle[]) => {
         if (cancelled || !candles.length) return;
         s.setData(candles.map(toBar));

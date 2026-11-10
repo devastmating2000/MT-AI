@@ -73,7 +73,24 @@ button, input { font: inherit; color: inherit; }
 .empty { color: var(--ink-3); padding: 20px 16px; max-inline-size: 60ch; }
 
 /* ---- shell --------------------------------------------------------------------------- */
-.boot { display: grid; place-items: center; min-block-size: 100dvh; color: var(--ink-2); }
+.boot { display: grid; place-items: center; min-block-size: 100dvh; color: var(--ink-2); padding: 24px; }
+.boot div { display: grid; gap: 10px; max-inline-size: 52ch; justify-items: start; }
+.boot .strong { color: var(--ink); font-size: 16px; }
+
+.login { display: grid; place-items: center; min-block-size: 100dvh; padding: 24px; }
+.login form {
+  display: grid; gap: 14px; inline-size: min(100%, 360px); padding: 28px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r);
+}
+.login h1 { font-size: 20px; font-weight: 600; margin-block-start: 6px; }
+.login-note { color: var(--ink-2); font-size: 13px; margin-block-start: -8px; }
+.login label { display: grid; gap: 5px; font-size: 13px; font-weight: 500; }
+.login input {
+  block-size: 44px; padding: 0 12px; font-size: 16px;
+  background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--r);
+}
+.login-error { color: var(--down); font-size: 13px; min-block-size: 20px; }
+.login .btn { min-block-size: 44px; justify-content: center; }
 .shell {
   display: grid;
   grid-template-columns: 236px minmax(0, 1fr) 404px;

@@ -23,6 +23,13 @@ export const config = {
   llmEnabled: Boolean(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN),
   newsFeeds: (process.env.MTAI_NEWS_FEEDS ?? 'https://www.fxstreet.com/rss/news')
     .split(',').map((s) => s.trim()).filter(Boolean),
+  // --- access control ---------------------------------------------------------------------
+  /** Postgres connection string (Neon). When set, the dashboard and API require a login. */
+  databaseUrl: process.env.DATABASE_URL ?? '',
+  allowedOrigins: (process.env.MTAI_ALLOWED_ORIGINS ?? '').split(',').map((s) => s.trim().replace(/\/+$/, '')).filter(Boolean),
+  /** Number of reverse proxies in front of the server (0 = clients connect directly). */
+  trustProxy: Number(process.env.MTAI_TRUST_PROXY ?? 0),
+  hsts: ['1', 'true'].includes((process.env.MTAI_HSTS ?? '').toLowerCase()),
   paperBalance: Number(process.env.MTAI_PAPER_BALANCE ?? 10_000),
 };
 
