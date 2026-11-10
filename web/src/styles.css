@@ -77,20 +77,115 @@ button, input { font: inherit; color: inherit; }
 .boot div { display: grid; gap: 10px; max-inline-size: 52ch; justify-items: start; }
 .boot .strong { color: var(--ink); font-size: 16px; }
 
-.login { display: grid; place-items: center; min-block-size: 100dvh; padding: 24px; }
-.login form {
-  display: grid; gap: 14px; inline-size: min(100%, 360px); padding: 28px;
-  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r);
+.login {
+  --ease: cubic-bezier(.2, .8, .2, 1);
+  --ease-enter: cubic-bezier(.22, 1, .36, 1);
+  display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(360px, 1fr);
+  min-block-size: 100dvh; background: var(--plane);
 }
-.login h1 { font-size: 20px; font-weight: 600; margin-block-start: 6px; }
-.login-note { color: var(--ink-2); font-size: 13px; margin-block-start: -8px; }
-.login label { display: grid; gap: 5px; font-size: 13px; font-weight: 500; }
-.login input {
-  block-size: 44px; padding: 0 12px; font-size: 16px;
-  background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--r);
+
+/* Left: what the product is, shown as the thing itself. */
+.login-story {
+  display: grid; grid-template-rows: auto 1fr auto; gap: 40px;
+  padding: 40px clamp(24px, 5vw, 72px) 48px; min-inline-size: 0;
 }
-.login-error { color: var(--down); font-size: 13px; min-block-size: 20px; }
-.login .btn { min-block-size: 44px; justify-content: center; }
+.login-words { align-self: end; max-inline-size: 780px; }
+.login h1 {
+  font: 500 clamp(32px, 4vw, 56px)/1.06 var(--sans); letter-spacing: -0.02em; text-wrap: balance;
+  overflow-wrap: break-word; min-inline-size: 0;
+}
+.mask { display: block; overflow: hidden; padding-block-end: 0.08em; }
+.mask > span { display: block; }
+.login-lead { margin-block-start: 20px; max-inline-size: 46ch; color: var(--ink-2); font-size: 17px; line-height: 1.55; }
+.login-panel {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
+  padding: clamp(16px, 2.4vw, 32px); max-inline-size: 820px;
+}
+
+.pipe { display: block; inline-size: 100%; block-size: auto; }
+.pipe-line { fill: none; stroke: var(--line-strong); stroke-width: 1.25; }
+.pipe-node { fill: var(--surface-2); stroke: var(--line-strong); stroke-width: 1; }
+.pipe-node-core { stroke: var(--accent); stroke-width: 1.5; }
+.pipe-icon { color: var(--ink-2); }
+.pipe-label { fill: var(--ink); font: 500 14px var(--sans); }
+.pipe-pulse { fill: var(--accent); offset-rotate: 0deg; opacity: 0; animation: pipe-run 3.2s linear infinite; }
+@keyframes pipe-run {
+  0% { offset-distance: 0%; opacity: 0; }
+  3% { opacity: 1; }
+  20% { offset-distance: 100%; opacity: 1; }
+  23%, 100% { offset-distance: 100%; opacity: 0; }
+}
+
+/* Right: the one action. */
+.login-side {
+  display: grid; place-items: center; padding: 40px clamp(24px, 4vw, 64px);
+  background: var(--surface); border-inline-start: 1px solid var(--line);
+}
+.login form { display: grid; gap: 20px; inline-size: min(100%, 380px); }
+.login h2 { font: 600 24px/1.2 var(--sans); letter-spacing: -0.01em; margin-block-end: 4px; }
+.field { display: grid; gap: 6px; }
+.field label { font-size: 14px; font-weight: 500; }
+.field input {
+  inline-size: 100%; block-size: 48px; padding: 0 14px; font-size: 16px;
+  background: var(--plane); border: 1px solid var(--line-strong); border-radius: 6px;
+  transition: border-color 140ms var(--ease), box-shadow 140ms var(--ease);
+}
+.field input:hover { border-color: var(--ink-3); }
+.field input:focus-visible { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 28%, transparent); }
+.field input[aria-invalid='true'] { border-color: var(--down); }
+.field-row { position: relative; }
+.field-row input { padding-inline-end: 92px; }
+.field-toggle {
+  position: absolute; inset-block: 6px; inset-inline-end: 6px; padding: 0 10px;
+  background: none; border: 0; border-radius: 4px; color: var(--ink-2); font-size: 14px; cursor: pointer;
+  transition: color 150ms var(--ease), background-color 150ms var(--ease);
+}
+.field-toggle:hover { color: var(--ink); background: var(--surface-3); }
+.field-error { color: var(--down); font-size: 14px; }
+.field-error:empty { display: none; }
+
+.login-submit {
+  block-size: 48px; border: 0; border-radius: 6px; cursor: pointer;
+  background: var(--accent); color: var(--accent-ink); font-size: 16px; font-weight: 600;
+  transition: background-color 150ms var(--ease), transform 150ms var(--ease);
+}
+.login-submit[aria-busy='true'] { cursor: progress; }
+@media (hover: hover) and (pointer: fine) {
+  /* The fill steps toward the ink and the button steps up; a press sinks it below rest. */
+  .login-submit:hover { background: color-mix(in srgb, var(--accent) 86%, var(--ink)); transform: translateY(-1px); }
+}
+.login-submit:active { transform: translateY(1px) scale(.985); transition-duration: 90ms; }
+.form-status { min-block-size: 22px; margin-block-start: -6px; color: var(--ink-2); font-size: 14px; }
+.form-status.is-failed { color: var(--down); }
+.login-foot { padding-block-start: 16px; border-block-start: 1px solid var(--line); color: var(--ink-3); font-size: 14px; line-height: 1.5; }
+
+/* The entrance, once: the headline rises out of its masks, the rest follows, the panel settles. */
+@media (prefers-reduced-motion: no-preference) {
+  [data-enter] .mask > span { animation: rise 700ms var(--ease-enter) both; }
+  [data-enter] .mask:nth-child(2) > span { animation-delay: 80ms; }
+  [data-enter] .login-lead { animation: fade-up 520ms var(--ease-enter) 430ms both; }
+  [data-enter] .login-panel { animation: settle 900ms var(--ease-enter) both; }
+}
+@keyframes rise { from { transform: translateY(105%); } }
+@keyframes fade-up { from { opacity: 0; transform: translateY(12px); } }
+@keyframes settle { from { transform: scale(.98); } }
+@media (prefers-reduced-motion: reduce) {
+  .pipe-pulse { display: none; }
+}
+
+@media (max-width: 900px) {
+  .login { grid-template-columns: minmax(0, 1fr); }
+  .login-story { display: contents; }
+  .login .wordmark { order: 1; padding: 24px 24px 0; }
+  .login-words { order: 2; padding: 28px 24px 0; }
+  .login-side { order: 3; padding: 32px 24px; border-inline-start: 0; background: none; place-items: start stretch; }
+  .login form { inline-size: 100%; }
+  .login-panel { order: 4; margin: 0 24px 40px; overflow-x: auto; }
+  /* Keep the labels readable on a phone: the diagram scrolls sideways instead of shrinking. */
+  .pipe { min-inline-size: 560px; }
+  .login-lead { font-size: 16px; }
+}
+
 .shell {
   display: grid;
   grid-template-columns: 236px minmax(0, 1fr) 404px;
