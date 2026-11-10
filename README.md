@@ -28,8 +28,17 @@ Outros comandos:
 |---|---|
 | `npm test` | 22 testes: indicadores, backtester, pesos, corretor simulado, protocolo MT5, mesa completa |
 | `npm run simulate -- XAUUSD 90` | Corre a mesa completa (todos os agentes) 90 dias no simulador e imprime o resumo |
+| `NODE_USE_ENV_PROXY=1 npm run live -- XAUUSD 30 60` | Mesa completa 30 min com **cotações reais** (Swissquote) e execução simulada, velas de 60 s. `--force` põe as estratégias do banco a votar |
 | `npm run backtest -- 6000` | Backtest de todas as estratégias em dados sintéticos |
 | `npm run build && npm start` | Compila o painel e serve tudo em `http://127.0.0.1:8787` |
+
+## Preços reais sem conta (modo `live`)
+
+`MTAI_MODE=live` usa a cotação pública de compra/venda da Swissquote, lida de 2 em 2 segundos, e simula
+a execução dentro do processo: nenhuma ordem sai para um corretor. O histórico para aquecer os
+indicadores vem do Yahoo; no ouro e na prata é o contrato de futuros deslocado para o preço à vista,
+por isso as velas antigas são uma aproximação. `MTAI_TIMEFRAME_SEC` muda o período das velas
+(por omissão 900). Atrás de um proxy, o Node precisa de `NODE_USE_ENV_PROXY=1`.
 
 ## Ligar ao MetaTrader 5 (VT Markets ou outro)
 

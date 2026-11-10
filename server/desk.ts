@@ -1,4 +1,4 @@
-import type { AppState, Candle, Consensus, EquityPoint, RiskSettings, ServerEvent, SymbolSpec, Tick } from '../shared/types';
+import type { AppState, Candle, Mode, Consensus, EquityPoint, RiskSettings, ServerEvent, SymbolSpec, Tick } from '../shared/types';
 import { startCoordinator } from './agents/coordinator';
 import { startEventAgent } from './agents/event';
 import type { DeskContext } from './agents/context';
@@ -15,10 +15,11 @@ import { llmStatus } from './llm/client';
 import { specFor } from './symbols';
 
 export interface DeskOptions {
-  mode: 'paper' | 'mt5';
+  mode: Mode;
   symbols: string[];
   tradingEnabled: boolean;
   risk?: Partial<RiskSettings>;
+  ignoreBench?: boolean;
 }
 
 /** Wires the broker, the message bus and the agents together. */
@@ -40,7 +41,7 @@ export class Desk {
     this.bus = new MessageBus(() => broker.now());
     this.bus.onMessage = (message) => this.onEvent({ type: 'message', message });
     this.ctx = {
-      bus: this.bus, broker, mode: opts.mode, tradingEnabled: opts.tradingEnabled,
+      bus: this.bus, broker, mode: opts.mode, ignoreBench: opts.ignoreBench, tradingEnabled: opts.tradingEnabled,
       specs: new Map<string, SymbolSpec>(opts.symbols.map((s) => [s, specFor(s)])),
       candles: new Map<string, Candle[]>(), ticks: new Map<string, Tick>(),
       risk: { ...defaultRisk, ...opts.risk }, consensus: new Map<string, Consensus>(),

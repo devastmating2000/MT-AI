@@ -1,7 +1,8 @@
 // Types shared by the agent server and the React dashboard.
 
 export type Direction = 'long' | 'short';
-export type Mode = 'paper' | 'mt5';
+/** paper = synthetic prices; live = real quotes with simulated fills; mt5 = real account. */
+export type Mode = 'paper' | 'live' | 'mt5';
 
 export interface Candle {
   /** Bar open time, seconds since epoch (UTC). */

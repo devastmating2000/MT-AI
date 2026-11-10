@@ -11,7 +11,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "backtest": "tsx server/backtest/cli.ts",
-    "simulate": "tsx server/simulate.ts"
+    "simulate": "tsx server/simulate.ts",
+    "live": "tsx server/liveTest.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.7.0",

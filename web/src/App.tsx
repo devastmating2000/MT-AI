@@ -21,12 +21,13 @@ function TopBar({ state, desk }: { state: AppState; desk: DeskApi }) {
   const { account } = state;
   const venue = state.mode === 'paper'
     ? 'Simulador, dados sintéticos'
+    : state.mode === 'live' ? (state.brokerConnected ? 'Cotações reais, execução simulada' : 'Cotações reais indisponíveis')
     : state.brokerConnected ? 'MetaTrader 5 ligado' : 'MetaTrader 5 desligado';
   return (
     <header className="top">
       <div className="brand">
         <span className="wordmark">MT-AI</span>
-        <span className={state.mode === 'mt5' && !state.brokerConnected ? 'venue warn' : 'venue'}>{venue}</span>
+        <span className={state.mode !== 'paper' && !state.brokerConnected ? 'venue warn' : 'venue'}>{venue}</span>
       </div>
       <dl className="figures">
         <div><dt>Capital</dt><dd>{num(account.equity)} <small>{account.currency}</small></dd></div>

@@ -11,7 +11,7 @@ export function startMarketAgent(ctx: DeskContext): void {
   broker.on('history', (symbol, candles) => {
     ctx.candles.set(symbol, candles.slice(-MAX_BARS));
     bus.publish({ from: 'market', to: 'all', topic: 'market.history', symbol, data: { symbol },
-      text: `${symbol}: ${candles.length} velas M15 de histórico carregadas` });
+      text: `${symbol}: ${candles.length} velas de histórico carregadas` });
   });
 
   broker.on('tick', (tick) => ctx.ticks.set(tick.symbol, tick));

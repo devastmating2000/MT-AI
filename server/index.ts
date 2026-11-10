@@ -6,6 +6,7 @@ import { timingSafeEqual } from 'node:crypto';
 import express from 'express';
 import { WebSocketServer } from 'ws';
 import type { ServerEvent } from '../shared/types';
+import { LiveQuoteBroker } from './broker/liveQuotes';
 import { Mt5BridgeBroker } from './broker/mt5Bridge';
 import { PaperBroker } from './broker/paper';
 import type { Broker } from './broker/types';
@@ -20,6 +21,8 @@ if (config.mode === 'mt5' && config.bridgeToken.length < 16) {
 
 const broker: Broker = config.mode === 'mt5'
   ? new Mt5BridgeBroker(config.symbols)
+  : config.mode === 'live'
+  ? new LiveQuoteBroker(config.symbols.map(specFor), { balance: config.paperBalance, timeframeSec: config.timeframeSec })
   : new PaperBroker(config.symbols.map(specFor), {
     balance: config.paperBalance, candleMs: config.simCandleMs, seed: config.simSeed, timeframeSec: config.timeframeSec,
   });

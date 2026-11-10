@@ -56,7 +56,8 @@ export function startStrategist(ctx: DeskContext): { stats: () => StrategyStats[
   });
 
   bus.handle('strategist', 'strategy.weights', ({ symbol }: { symbol: string }) => {
-    const stats = bySymbol.get(symbol) ?? [];
+    let stats = bySymbol.get(symbol) ?? [];
+    if (ctx.ignoreBench) stats = stats.map((s) => (s.benched ? { ...s, benched: false, weight: 1 } : s));
     const active = stats.filter((s) => !s.benched).sort((a, b) => b.weight - a.weight);
     return {
       data: stats,

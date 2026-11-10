@@ -1,4 +1,4 @@
-import type { Candle, Consensus, RiskSettings, SymbolSpec, Tick } from '../../shared/types';
+import type { Candle, Consensus, Mode, RiskSettings, SymbolSpec, Tick } from '../../shared/types';
 import type { Broker } from '../broker/types';
 import type { MessageBus } from '../bus';
 
@@ -12,7 +12,9 @@ export interface DeskContext {
   risk: RiskSettings;
   consensus: Map<string, Consensus>;
   tradingEnabled: boolean;
-  mode: 'paper' | 'mt5';
+  mode: Mode;
+  /** Test switch: let strategies vote even when their record says they should sit out. */
+  ignoreBench?: boolean;
 }
 
 export const fmt = (n: number, d = 2) => n.toLocaleString('pt-PT', { minimumFractionDigits: d, maximumFractionDigits: d, useGrouping: 'always' } as Intl.NumberFormatOptions);

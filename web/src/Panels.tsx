@@ -82,7 +82,7 @@ export function Strategies({ state, symbol }: { state: AppState; symbol: string 
   return (
     <>
       <p className="panel-note">
-        Backtest em {symbol} sobre {state.mode === 'paper' ? 'dados sintéticos do simulador' : 'o histórico enviado pelo corretor'}.
+        Backtest em {symbol} sobre {state.mode === 'paper' ? 'dados sintéticos do simulador' : state.mode === 'live' ? 'histórico real aproximado' : 'o histórico enviado pelo corretor'}.
         Só vota quem tem expectativa positiva; o peso segue a taxa de acerto. Resultados passados não garantem resultados futuros.
       </p>
       <div className="table-wrap">
