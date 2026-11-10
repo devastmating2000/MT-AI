@@ -13,7 +13,7 @@ interface Stored {
 
 export type Session =
   | { status: 'checking' }
-  | { status: 'unreachable' }
+  | { status: 'demo' } // no agent server reachable: the simulator runs in this tab
   | { status: 'open' } // server runs without login (local use)
   | { status: 'signedOut' }
   | { status: 'signedIn'; email: string };
@@ -93,8 +93,9 @@ async function check(): Promise<void> {
     const me = await api('/api/me');
     set(me.ok ? { status: 'signedIn', email: stored.email } : { status: 'signedOut' });
   } catch {
-    set({ status: 'unreachable' });
-    window.setTimeout(check, 3000);
+    // Nothing to protect without a server, so open the demo; keep looking for the real one.
+    if (current.status === 'checking') set({ status: 'demo' });
+    window.setTimeout(check, 15_000);
   }
 }
 

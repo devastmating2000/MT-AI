@@ -1,7 +1,6 @@
 import { CandlestickSeries, createChart, LineStyle, type IPriceLine, type ISeriesApi, type UTCTimestamp } from 'lightweight-charts';
 import { useEffect, useRef } from 'react';
 import type { Candle, Position, SymbolSpec } from '../../shared/types';
-import { api } from './auth';
 import type { BarListener } from './useDesk';
 
 const token = (name: string) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
@@ -11,9 +10,10 @@ interface Props {
   spec: SymbolSpec;
   positions: Position[];
   subscribeBars: (fn: BarListener) => () => void;
+  loadCandles: (symbol: string) => Promise<Candle[]>;
 }
 
-export function PriceChart({ spec, positions, subscribeBars }: Props) {
+export function PriceChart({ spec, positions, subscribeBars, loadCandles }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const series = useRef<ISeriesApi<'Candlestick'> | null>(null);
   const lines = useRef<IPriceLine[]>([]);
@@ -44,8 +44,7 @@ export function PriceChart({ spec, positions, subscribeBars }: Props) {
 
     let last = 0;
     let cancelled = false;
-    api(`/api/candles?symbol=${spec.symbol}`)
-      .then((r) => (r.ok ? r.json() : []))
+    loadCandles(spec.symbol)
       .then((candles: Candle[]) => {
         if (cancelled || !candles.length) return;
         s.setData(candles.map(toBar));
@@ -68,7 +67,7 @@ export function PriceChart({ spec, positions, subscribeBars }: Props) {
       series.current = null;
       chart.remove();
     };
-  }, [spec.symbol, spec.digits, subscribeBars]);
+  }, [spec.symbol, spec.digits, subscribeBars, loadCandles]);
 
   const key = positions.map((p) => `${p.id}:${p.stopLoss}:${p.takeProfit}`).join(',');
   useEffect(() => {

@@ -52,6 +52,10 @@ dá `404` em `/api` e falha em `wss://.../ws`. A divisão é:
 | Servidor de agentes (`server/`) | Uma máquina sempre ligada: o PC ou VPS Windows onde está o MT5, ou um serviço como Railway, Fly.io ou Render |
 | Contas, sessões e registo de auditoria | Neon (Postgres), plano gratuito |
 
+Sem servidor ao alcance, o painel abre em **modo de demonstração**: o simulador e os agentes correm no
+próprio browser, com preços sintéticos, sem login e sem guardar nada. Uma faixa no topo avisa disso. Assim
+que o servidor responder, o painel passa a pedir login e a usar o servidor.
+
 Passos:
 
 1. **Neon.** Crie um projeto e copie a ligação "pooled" para `DATABASE_URL` no servidor. As tabelas são

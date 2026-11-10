@@ -86,26 +86,14 @@ function Watchlist({ state, symbol, onSelect }: { state: AppState; symbol: strin
 
 export function App() {
   const session = useSession();
-  const signedIn = session.status === 'signedIn' || session.status === 'open';
-  const desk = useDesk(signedIn);
+  const demo = session.status === 'demo';
+  const signedIn = session.status === 'signedIn' || session.status === 'open' || demo;
+  const desk = useDesk(signedIn, demo);
   const { state } = desk;
   const [symbol, setSymbol] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>('positions');
 
   if (session.status === 'checking') return <main className="boot"><p>A verificar a sessão…</p></main>;
-  if (session.status === 'unreachable') {
-    return (
-      <main className="boot">
-        <div>
-          <p className="strong">Sem ligação ao servidor de agentes.</p>
-          <p>
-            Destino: {API_BASE || location.origin}. Este painel é só a interface; o servidor de agentes tem de estar a
-            correr nesse endereço. Se estiver noutro sítio, defina VITE_API_URL e volte a publicar.
-          </p>
-        </div>
-      </main>
-    );
-  }
   if (session.status === 'signedOut') return <Login />;
   if (!state) return <main className="boot"><p>{desk.online ? 'A carregar a mesa…' : 'A ligar ao servidor de agentes…'}</p></main>;
   const current = state.symbols.find((s) => s.symbol === symbol) ?? state.symbols[0];
@@ -115,7 +103,13 @@ export function App() {
   return (
     <div className="shell">
       <TopBar state={state} desk={desk} email={session.status === 'signedIn' ? session.email : undefined} />
-      {!desk.online && <p className="banner" role="alert">Ligação ao servidor perdida. A tentar de novo…</p>}
+      {demo && (
+        <p className="banner" role="status">
+          Demonstração: sem servidor de agentes em {API_BASE || location.origin}, o simulador corre neste separador com preços
+          sintéticos. Nada aqui é real nem fica guardado.
+        </p>
+      )}
+      {!desk.online && !demo && <p className="banner" role="alert">Ligação ao servidor perdida. A tentar de novo…</p>}
       {!state.tradingEnabled && <p className="banner" role="status">Negociação em pausa. Os agentes continuam a analisar, mas não enviam ordens.</p>}
       <Watchlist state={state} symbol={current.symbol} onSelect={setSymbol} />
 
@@ -132,7 +126,7 @@ export function App() {
             </dl>
           )}
         </header>
-        <PriceChart key={current.symbol} spec={current} positions={state.positions.filter((p) => p.symbol === current.symbol)} subscribeBars={desk.subscribeBars} />
+        <PriceChart key={current.symbol} spec={current} positions={state.positions.filter((p) => p.symbol === current.symbol)} subscribeBars={desk.subscribeBars} loadCandles={desk.loadCandles} />
 
         <div className="tabs" role="tablist" aria-label="Detalhes da mesa">
           {TABS.map((t) => (

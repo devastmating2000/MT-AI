@@ -21,7 +21,7 @@ export class PaperBroker extends Broker {
   private balance: number;
   private barTime = 0;
   private tickIndex = 0;
-  private timer: NodeJS.Timeout | null = null;
+  private timer: ReturnType<typeof setInterval> | null = null;
   private nextId = 1;
 
   constructor(private readonly specs: SymbolSpec[], private readonly opts: PaperOptions) {
