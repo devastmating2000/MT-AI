@@ -60,7 +60,8 @@ Passos:
 
 1. **Neon.** Crie um projeto e copie a ligação "pooled" para `DATABASE_URL` no servidor. As tabelas são
    criadas no arranque.
-2. **Operador.** No servidor: `npm run user -- add o-seu@email.com` e escolha uma palavra-passe com 12
+2. **Operador.** Defina `MTAI_ADMIN_EMAIL` e `MTAI_ADMIN_PASSWORD` no servidor: no primeiro arranque a
+   conta é criada (e pode apagar a variável da palavra-passe a seguir). Em alternativa, no servidor: `npm run user -- add o-seu@email.com` e escolha uma palavra-passe com 12
    ou mais caracteres. Não existe página de registo: só quem tem acesso ao servidor cria contas.
 3. **Servidor.** Exponha-o por HTTPS (Caddy, nginx ou Cloudflare Tunnel) num endereço como
    `https://api.mtbot.dev` e defina `MTAI_ALLOWED_ORIGINS=https://mtbot.dev`, `MTAI_TRUST_PROXY=1`,

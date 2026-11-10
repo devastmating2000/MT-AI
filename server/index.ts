@@ -6,7 +6,7 @@ import { timingSafeEqual } from 'node:crypto';
 import express from 'express';
 import { WebSocketServer } from 'ws';
 import type { ServerEvent } from '../shared/types';
-import { assertSafeToStart, Auth, bearer, cors, originAllowed, rateLimit, requireOperator, securityHeaders } from './auth';
+import { assertSafeToStart, Auth, hashPassword, MIN_PASSWORD, bearer, cors, originAllowed, rateLimit, requireOperator, securityHeaders } from './auth';
 import { createPool, PostgresStore } from './db';
 import { LiveQuoteBroker } from './broker/liveQuotes';
 import { Mt5BridgeBroker } from './broker/mt5Bridge';
@@ -21,6 +21,14 @@ let store: PostgresStore | null = null;
 if (config.databaseUrl) {
   store = new PostgresStore(createPool(config.databaseUrl));
   await store.migrate();
+  if (!(await store.listOperators()).length && config.adminEmail && config.adminPassword) {
+    if (config.adminPassword.length < MIN_PASSWORD) {
+      console.error(`MTAI_ADMIN_PASSWORD tem de ter pelo menos ${MIN_PASSWORD} caracteres.`);
+      process.exit(1);
+    }
+    await store.upsertOperator(config.adminEmail, await hashPassword(config.adminPassword));
+    console.log(`Primeiro operador criado: ${config.adminEmail}. Pode agora apagar MTAI_ADMIN_PASSWORD das variáveis do servidor.`);
+  }
   if (!(await store.listOperators()).length) console.warn('Ainda não há operadores: ninguém consegue entrar. Crie um com "npm run user -- add <email>".');
 }
 const auth = new Auth(store);

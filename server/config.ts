@@ -29,6 +29,9 @@ export const config = {
   // --- access control ---------------------------------------------------------------------
   /** Postgres connection string (Neon). When set, the dashboard and API require a login. */
   databaseUrl: env.DATABASE_URL ?? '',
+  /** First-run bootstrap: creates this operator when the database has none. */
+  adminEmail: (env.MTAI_ADMIN_EMAIL ?? '').trim().toLowerCase(),
+  adminPassword: env.MTAI_ADMIN_PASSWORD ?? '',
   allowedOrigins: (env.MTAI_ALLOWED_ORIGINS ?? '').split(',').map((s) => s.trim().replace(/\/+$/, '')).filter(Boolean),
   /** Number of reverse proxies in front of the server (0 = clients connect directly). */
   trustProxy: Number(env.MTAI_TRUST_PROXY ?? 0),
