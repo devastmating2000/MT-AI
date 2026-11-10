@@ -1,10 +1,10 @@
-import { Activity, CandlestickChart, FlaskConical, Newspaper, Scale, Send, ShieldCheck, type LucideIcon } from 'lucide-react';
+import { Activity, CandlestickChart, FlaskConical, Newspaper, Scale, Send, ShieldCheck, Zap, type LucideIcon } from 'lucide-react';
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { AgentId, AgentInfo, AgentMessage } from '../../shared/types';
 import { hhmm } from './format';
 
 const ICONS: Record<AgentId, LucideIcon> = {
-  market: Activity, technical: CandlestickChart, news: Newspaper, strategist: FlaskConical,
+  market: Activity, technical: CandlestickChart, news: Newspaper, strategist: FlaskConical, event: Zap,
   coordinator: Scale, risk: ShieldCheck, execution: Send,
 };
 

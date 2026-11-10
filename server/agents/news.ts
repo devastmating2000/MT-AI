@@ -118,7 +118,7 @@ export function startNewsAgent(ctx: DeskContext): { state: () => NewsState } {
       const mins = (e.time - now) / 60_000;
       if (mins > 0 && mins <= 60) {
         warned.add(e.id);
-        bus.publish({ from: 'news', to: 'all', topic: 'news.event', kind: 'warn',
+        bus.publish({ from: 'news', to: 'all', topic: 'news.event', kind: 'warn', data: e,
           text: `${e.title} (${e.currency}) daqui a ${Math.round(mins)} min. Vou bloquear novas entradas em pares com ${e.currency} perto da hora` });
       }
     }

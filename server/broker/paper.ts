@@ -1,6 +1,7 @@
 import type { Candle, ClosedTrade, CloseReason, Position, SymbolSpec } from '../../shared/types';
 import { roundPrice, valuePerPrice } from '../symbols';
 import { Broker, type OrderRequest } from './types';
+import { simulatedEvents } from '../news/sources';
 import { SimMarket, TICKS_PER_CANDLE } from './simMarket';
 
 export interface PaperOptions {
@@ -58,9 +59,13 @@ export class PaperBroker extends Broker {
   step(): void {
     const tf = this.opts.timeframeSec;
     const time = this.barTime + (this.tickIndex * tf) / TICKS_PER_CANDLE;
+    const shocks = this.tickIndex === 0 ? this.releaseShocks() : null;
     for (const [symbol, market] of this.markets) {
       if (this.tickIndex === 0) market.startCandle();
       const before = market.price;
+      // Applied after the open is read, so the jump shows inside the release bar, not as a gap.
+      const shock = shocks?.get(symbol);
+      if (shock) market.shock(shock);
       const mid = market.tick(time);
       const half = (market.spec.spreadPips * market.spec.pip) / 2;
       let bar = this.forming.get(symbol);
@@ -83,6 +88,26 @@ export class PaperBroker extends Broker {
       this.barTime += tf;
       for (const [symbol, bar] of this.forming) this.emit('candle', symbol, { ...bar });
     }
+  }
+
+  /** Simulated high-impact releases move every market that contains the event's currency. */
+  private releaseShocks(): Map<string, 1 | -1> {
+    const out = new Map<string, 1 | -1>();
+    const from = this.barTime * 1000;
+    const to = from + this.opts.timeframeSec * 1000;
+    for (const e of simulatedEvents(from, 1)) {
+      if (e.impact !== 'high' || e.time < from || e.time >= to) continue;
+      // The surprise direction is fixed per event so that a run is reproducible.
+      let h = 0;
+      for (const ch of e.id) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+      const strong = h % 2 === 0 ? 1 : -1;
+      for (const market of this.markets.values()) {
+        const { base, quote } = market.spec;
+        if (base === e.currency) out.set(market.spec.symbol, strong);
+        else if (quote === e.currency) out.set(market.spec.symbol, strong === 1 ? -1 : 1);
+      }
+    }
+    return out;
   }
 
   /** Run a whole candle synchronously (used by tests). */

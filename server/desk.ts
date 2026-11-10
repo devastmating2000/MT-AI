@@ -1,5 +1,6 @@
 import type { AppState, Candle, Consensus, EquityPoint, RiskSettings, ServerEvent, SymbolSpec, Tick } from '../shared/types';
 import { startCoordinator } from './agents/coordinator';
+import { startEventAgent } from './agents/event';
 import type { DeskContext } from './agents/context';
 import { startExecutionAgent } from './agents/execution';
 import { startMarketAgent } from './agents/market';
@@ -20,7 +21,7 @@ export interface DeskOptions {
   risk?: Partial<RiskSettings>;
 }
 
-/** Wires the broker, the message bus and the seven agents together. */
+/** Wires the broker, the message bus and the agents together. */
 export class Desk {
   readonly bus: MessageBus;
   readonly ctx: DeskContext;
@@ -31,6 +32,7 @@ export class Desk {
     news: ReturnType<typeof startNewsAgent>;
     risk: ReturnType<typeof startRiskAgent>;
     execution: ReturnType<typeof startExecutionAgent>;
+    event: ReturnType<typeof startEventAgent>;
   };
   onEvent: (event: ServerEvent) => void = () => {};
 
@@ -59,6 +61,7 @@ export class Desk {
       news: startNewsAgent(this.ctx),
       risk: startRiskAgent(this.ctx),
       execution: startExecutionAgent(this.ctx),
+      event: startEventAgent(this.ctx),
     };
     startTechnicalAgent(this.ctx);
     startCoordinator(this.ctx);
@@ -127,7 +130,7 @@ export class Desk {
       ticks: Object.fromEntries(this.ctx.ticks),
       positions: this.broker.positions(),
       trades: this.parts.execution.trades().slice(-100).reverse(),
-      stats: this.parts.strategist.stats(),
+      stats: [...this.parts.strategist.stats(), ...this.parts.event.stats()],
       agents: this.bus.roster(),
       news: this.parts.news.state(),
       risk: this.ctx.risk,

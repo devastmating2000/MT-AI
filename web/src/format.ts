@@ -13,8 +13,8 @@ export const sideLabel = (d: Direction) => (d === 'long' ? 'Compra' : 'Venda');
 
 export const tone = (v: number) => (v > 0 ? 'up' : v < 0 ? 'down' : '');
 
-const clock = new Intl.DateTimeFormat('pt-PT', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' });
-const day = new Intl.DateTimeFormat('pt-PT', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'UTC' });
+const clock = new Intl.DateTimeFormat('pt-PT', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Lisbon' });
+const day = new Intl.DateTimeFormat('pt-PT', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Lisbon' });
 
 export const hhmm = (ms: number) => clock.format(ms);
 export const dayTime = (ms: number) => day.format(ms);

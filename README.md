@@ -3,8 +3,8 @@
 Mesa de negociação com vários agentes de IA para forex e metais (ouro, prata), ligada ao MetaTrader 5.
 Funciona com qualquer corretor MT5, incluindo a VT Markets. Servidor em TypeScript (Node), painel em React.
 
-Sete agentes trocam mensagens entre si através de um barramento: um recebe o mercado, um corre as
-estratégias, um lê as notícias, um testa as estratégias e dá-lhes peso, um coordena a decisão, um gere o
+Oito agentes trocam mensagens entre si através de um barramento: um recebe o mercado, um corre as
+estratégias, um lê as notícias, um negoceia a reação a dados como o IPC, um testa as estratégias e dá-lhes peso, um coordena a decisão, um gere o
 risco e um executa. O painel mostra a conversa em direto.
 
 > **Aviso.** Negociar com alavancagem pode perder todo o capital. Nenhuma estratégia tem taxa de acerto
@@ -26,7 +26,7 @@ Outros comandos:
 
 | Comando | O que faz |
 |---|---|
-| `npm test` | 18 testes: indicadores, backtester, pesos, corretor simulado, protocolo MT5, mesa completa |
+| `npm test` | 22 testes: indicadores, backtester, pesos, corretor simulado, protocolo MT5, mesa completa |
 | `npm run backtest -- 6000` | Backtest de todas as estratégias em dados sintéticos |
 | `npm run build && npm start` | Compila o painel e serve tudo em `http://127.0.0.1:8787` |
 
@@ -64,6 +64,7 @@ O servidor escuta só em `127.0.0.1` e o painel não tem autenticação: não o 
 | Dados de mercado | Guarda as velas e anuncia cada fecho |
 | Analista técnico | Corre as cinco estratégias em cada vela fechada |
 | Analista de notícias | Calendário económico e sentimento por moeda; bloqueia entradas perto de dados de alto impacto |
+| Especialista em eventos | Negoceia a reação a dados de alto impacto (IPC, emprego, taxas de juro) depois de a vela da notícia fechar |
 | Estratega | Faz backtest de cada estratégia em cada símbolo, atribui pesos e manda para o banco as que perdem |
 | Coordenador | Soma os votos ponderados, consulta as notícias, pede revisão ao modelo de linguagem e propõe |
 | Gestor de risco | Dimensiona pelo stop e pode vetar; os limites dele não são negociáveis |
@@ -84,6 +85,32 @@ resultados ao vivo entram na conta à medida que as operações fecham.
 
 O backtester preenche na abertura da vela seguinte, desconta o spread e, quando uma vela toca no stop e no
 alvo, assume que o stop foi primeiro.
+
+### Dias de notícias (IPC, emprego, decisões de taxas)
+
+Os dados dos EUA saem normalmente às 13:30 de Lisboa e movem o dólar, o ouro e a prata em segundos.
+O especialista em eventos (`server/agents/event.ts`) trata desses momentos:
+
+1. Uma hora antes, o analista de notícias avisa a mesa e o especialista publica o plano: que símbolos
+   vigia e para que lado cada um costuma ir se o valor sair acima ou abaixo do previsto.
+2. **Não tenta adivinhar o número.** Ninguém o conhece antes da hora e o calendário público não traz o
+   valor real. Espera que a vela M15 da notícia feche.
+3. Só conta como reação uma vela com pelo menos 1,8× a amplitude média e fecho decidido para um lado.
+   Uma vela grande que fecha a meio (o "sobe e desce") é ignorada.
+4. Exige que os vários símbolos contem a mesma história sobre a moeda (por exemplo dólar forte: EURUSD
+   e ouro a cair, USDJPY a subir). Se discordam, fica de fora.
+5. Propõe no máximo duas operações por evento, a favor do movimento, com stop a meio da vela da notícia
+   e alvo a 1,5× o risco.
+
+Estas operações não passam pelo bloqueio de notícias (a notícia é o motivo da operação), mas entram
+sempre com **metade do tamanho** normal, porque o spread e o deslize são piores nessas alturas, e o
+gestor de risco continua a poder vetar. Não existe histórico de calendário para fazer backtest, por
+isso o registo é feito ao vivo: se um símbolo acumular seis ou mais operações com resultado negativo, o
+especialista deixa de o negociar. No simulador os saltos de preço nas horas das notícias são inventados
+para exercitar esta lógica; o resultado que lá obtém não prevê o resultado real.
+
+A entrada é feita no fecho da vela de 15 minutos, por isso apanha a continuação do movimento e não o
+primeiro salto.
 
 ### Risco
 
@@ -121,7 +148,7 @@ As horas vão em UTC (o EA desconta o fuso do servidor do corretor).
 ```
 shared/types.ts        tipos partilhados entre servidor e painel
 server/bus.ts          barramento de mensagens entre agentes
-server/agents/         os sete agentes
+server/agents/         os oito agentes
 server/strategies/     indicadores e estratégias
 server/backtest/       motor de backtest e pesos
 server/broker/         corretor simulado e ponte MT5

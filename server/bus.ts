@@ -25,6 +25,7 @@ const ROSTER: Array<Pick<AgentInfo, 'id' | 'name' | 'role'>> = [
   { id: 'market', name: 'Dados de mercado', role: 'Recebe cotações e fecha as velas' },
   { id: 'technical', name: 'Analista técnico', role: 'Corre as estratégias em cada vela' },
   { id: 'news', name: 'Analista de notícias', role: 'Calendário económico e sentimento' },
+  { id: 'event', name: 'Especialista em eventos', role: 'Negoceia a reação a dados como IPC e emprego' },
   { id: 'strategist', name: 'Estratega', role: 'Testa as estratégias e atribui pesos' },
   { id: 'coordinator', name: 'Coordenador', role: 'Pesa os votos e decide' },
   { id: 'risk', name: 'Gestor de risco', role: 'Dimensiona e pode vetar' },

@@ -80,8 +80,8 @@ export function lexiconSentiment(headlines: Headline[]): Record<string, number> 
 const TEMPLATES: Array<{ hour: number; minute: number; currency: string; title: string; impact: NewsEvent['impact'] }> = [
   { hour: 7, minute: 0, currency: 'GBP', title: 'PIB do Reino Unido (simulado)', impact: 'high' },
   { hour: 9, minute: 0, currency: 'EUR', title: 'IPC da Zona Euro (simulado)', impact: 'high' },
-  { hour: 12, minute: 30, currency: 'USD', title: 'Emprego não agrícola dos EUA (simulado)', impact: 'high' },
-  { hour: 12, minute: 30, currency: 'USD', title: 'IPC dos EUA (simulado)', impact: 'high' },
+  { hour: 13, minute: 30, currency: 'USD', title: 'Emprego não agrícola dos EUA (simulado)', impact: 'high' },
+  { hour: 13, minute: 30, currency: 'USD', title: 'IPC dos EUA (simulado)', impact: 'high' },
   { hour: 14, minute: 0, currency: 'USD', title: 'ISM Indústria (simulado)', impact: 'medium' },
   { hour: 18, minute: 0, currency: 'USD', title: 'Decisão de taxas da Fed (simulado)', impact: 'high' },
   { hour: 23, minute: 30, currency: 'JPY', title: 'IPC de Tóquio (simulado)', impact: 'medium' },

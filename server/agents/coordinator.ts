@@ -35,10 +35,15 @@ export function startCoordinator(ctx: DeskContext): void {
     ctx.consensus.set(symbol, { symbol, direction, score, time: broker.now(), outcome });
   }
 
-  async function decide(symbol: string, signals: StrategySignal[]): Promise<void> {
+  /**
+   * `event` marks a trade on the reaction to a data release. Those come from the event
+   * specialist with their own record, are exempt from the news blackout (the release is the
+   * reason for the trade) and always start at half size.
+   */
+  async function decide(symbol: string, signals: StrategySignal[], event?: { stat: StrategyStats; title: string }): Promise<void> {
     if (broker.positions().some((p) => p.symbol === symbol)) return;
 
-    const stats = await bus.request<StrategyStats[]>('coordinator', 'strategist', 'strategy.weights',
+    const stats = event ? [event.stat] : await bus.request<StrategyStats[]>('coordinator', 'strategist', 'strategy.weights',
       `Que peso tem cada estratégia em ${symbol}?`, { symbol }, symbol);
     const votes = signals
       .map((s) => ({ s, stat: stats.find((x) => x.strategy === s.strategy) }))
@@ -55,7 +60,7 @@ export function startCoordinator(ctx: DeskContext): void {
     const direction: Direction = tally.long >= tally.short ? 'long' : 'short';
     const net = Math.abs(tally.long - tally.short);
 
-    const brief = await bus.request<NewsBrief>('coordinator', 'news', 'news.brief',
+    const brief: NewsBrief = event ? { symbol, blackout: false, reason: '', bias: 0 } : await bus.request<NewsBrief>('coordinator', 'news', 'news.brief',
       `Há notícias que impeçam uma ${side(direction)} em ${symbol}?`, { symbol }, symbol);
     if (brief.blackout) {
       note(symbol, direction, net, 'Bloqueado por notícia de alto impacto');
@@ -74,10 +79,11 @@ export function startCoordinator(ctx: DeskContext): void {
     const lead = agreeing[0].s;
     const proposal: Proposal = {
       symbol, direction, stopLoss: lead.stopLoss, takeProfit: lead.takeProfit,
-      strategies: agreeing.map((v) => v.s.strategy), score, sizeFactor: 1,
+      strategies: agreeing.map((v) => v.s.strategy), score, sizeFactor: event ? 0.5 : 1,
     };
 
     let reasoning = `${agreeing.map((v) => STRATEGY_LABELS[v.s.strategy]).join(' + ')}, consenso ${fmt(score)}`;
+    if (event) reasoning = `Reação a ${event.title}. ${lead.rationale}`;
     if (llmAvailable()) {
       const review = await askStructured(ReviewSchema, SYSTEM, JSON.stringify({
         proposal: { symbol, direction, entry: lead.entry, stopLoss: lead.stopLoss, takeProfit: lead.takeProfit, consensusScore: score },
@@ -86,6 +92,7 @@ export function startCoordinator(ctx: DeskContext): void {
           record: { trades: v.stat.trades, winRate: v.stat.winRate, profitFactor: v.stat.profitFactor, expectancyR: v.stat.expectancyR, liveTrades: v.stat.liveTrades, liveWins: v.stat.liveWins },
         })),
         news: { biasForLong: brief.bias },
+        dataRelease: event ? { title: event.title, note: 'Trade on the confirmed reaction to this release; spreads and slippage are worse than usual.' } : null,
         openPositions: broker.positions().map((p) => ({ symbol: p.symbol, direction: p.direction })),
         statisticsSource: ctx.mode === 'paper' ? 'synthetic simulated data' : 'broker history',
       }));
@@ -96,7 +103,7 @@ export function startCoordinator(ctx: DeskContext): void {
           bus.publish({ from: 'coordinator', to: 'all', topic: 'coordinator.veto', kind: 'warn', symbol, text: `${symbol}: veto. ${reasoning}` });
           return;
         }
-        if (review.verdict === 'reduce') proposal.sizeFactor = Math.min(1, Math.max(0.25, review.sizeFactor));
+        if (review.verdict === 'reduce') proposal.sizeFactor *= Math.min(1, Math.max(0.25, review.sizeFactor));
       }
     }
 
@@ -135,14 +142,17 @@ export function startCoordinator(ctx: DeskContext): void {
     note(symbol, direction, score, position ? 'Ordem executada' : 'Ordem recusada pelo corretor');
   }
 
-  bus.on('analysis.signals', async ({ symbol, signals }: { symbol: string; signals: StrategySignal[] }) => {
+  type Incoming = { symbol: string; signals: StrategySignal[]; event?: { stat: StrategyStats; title: string } };
+  const onSignals = async ({ symbol, signals, event }: Incoming) => {
     // One decision at a time per symbol; a slow model reply must not stack up proposals.
     if (busy.has(symbol)) return;
     busy.add(symbol);
     try {
-      await decide(symbol, signals);
+      await decide(symbol, signals, event);
     } finally {
       busy.delete(symbol);
     }
-  });
+  };
+  bus.on('analysis.signals', onSignals);
+  bus.on('event.signals', onSignals);
 }

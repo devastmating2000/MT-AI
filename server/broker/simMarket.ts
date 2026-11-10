@@ -37,6 +37,7 @@ export class SimMarket {
   private anchor: number;
   private volMult = 1;
   private spare: number | null = null;
+  private impulse = 0;
 
   constructor(readonly spec: SymbolSpec, seed: number) {
     this.rand = mulberry32(seed);
@@ -73,7 +74,7 @@ export class SimMarket {
     if (this.regime === 'up') drift = (0.16 * this.baseVol) / TICKS_PER_CANDLE;
     else if (this.regime === 'down') drift = (-0.16 * this.baseVol) / TICKS_PER_CANDLE;
     else drift = (-0.035 * (this.price / this.anchor - 1)) / TICKS_PER_CANDLE;
-    this.price *= 1 + drift + vol * this.gauss();
+    this.price *= 1 + drift + this.impulse / TICKS_PER_CANDLE + vol * this.gauss();
     return this.price;
   }
 
@@ -93,6 +94,18 @@ export class SimMarket {
 
   startCandle(): void {
     if (this.regimeLeft-- <= 0) this.nextRegime();
+    this.impulse *= 0.85;
+  }
+
+  /**
+   * A data release: the price jumps `dir` at once, then usually keeps drifting the same way for
+   * a few bars and sometimes reverses, as real releases do.
+   */
+  shock(dir: 1 | -1): void {
+    const size = 4 + this.rand() * 3;
+    this.price *= 1 + dir * size * this.baseVol;
+    this.impulse = (this.rand() < 0.65 ? dir : -dir) * 0.9 * this.baseVol;
+    this.anchor = this.price;
   }
 
   history(count: number, endTime: number, tf: number): Candle[] {

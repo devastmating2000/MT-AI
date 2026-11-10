@@ -42,7 +42,8 @@ export type StrategyId =
   | 'mean_reversion'
   | 'donchian_breakout'
   | 'macd_momentum'
-  | 'session_breakout';
+  | 'session_breakout'
+  | 'news_impulse';
 
 export interface StrategySignal {
   strategy: StrategyId;
@@ -125,6 +126,7 @@ export type AgentId =
   | 'news'
   | 'strategist'
   | 'coordinator'
+  | 'event'
   | 'risk'
   | 'execution';
 
@@ -231,4 +233,5 @@ export const STRATEGY_LABELS: Record<StrategyId, string> = {
   donchian_breakout: 'Rutura Donchian',
   macd_momentum: 'Momentum MACD',
   session_breakout: 'Rutura de Londres',
+  news_impulse: 'Impulso de notícia',
 };
