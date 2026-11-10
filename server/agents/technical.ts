@@ -10,7 +10,7 @@ export function startTechnicalAgent(ctx: DeskContext): void {
     if (!candles || !spec) return;
     const signals = evaluateLatest(candles, spec);
     if (!signals.length) return;
-    const parts = signals.map((s) => `${STRATEGY_LABELS[s.strategy]} → ${side(s.direction)} (convicção ${fmt(s.confidence)})`);
+    const parts = signals.map((s) => `${STRATEGY_LABELS[s.strategy]} indica ${side(s.direction)} (convicção ${fmt(s.confidence)})`);
     ctx.bus.publish({ from: 'technical', to: 'coordinator', topic: 'analysis.signals', symbol, data: { symbol, signals },
       text: `${symbol}: ${parts.join('; ')}. ${signals[0].rationale}.` });
   });

@@ -105,8 +105,8 @@ export function assignWeights(stats: StrategyStats[]): StrategyStats[] {
     const trades = s.trades + s.liveTrades * 3;
     const wins = s.wins + s.liveWins * 3;
     const winRate = trades ? wins / trades : 0;
-    if (s.trades < MIN_TRADES) return { s, raw: 0, reason: `amostra pequena (${s.trades} operações)` };
-    if (s.expectancyR <= 0 || s.profitFactor < 1.05) return { s, raw: 0, reason: 'expectativa negativa no histórico' };
+    if (s.trades < MIN_TRADES) return { s, raw: 0, reason: 'amostra pequena' };
+    if (s.expectancyR <= 0 || s.profitFactor < 1.05) return { s, raw: 0, reason: 'expectativa negativa' };
     const quality = Math.min(1, Math.max(0.5, s.profitFactor / 2));
     const sample = Math.min(1, s.trades / 30);
     return { s, raw: winRate * quality * sample, reason: undefined };

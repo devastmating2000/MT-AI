@@ -15,5 +15,5 @@ export interface DeskContext {
   mode: 'paper' | 'mt5';
 }
 
-export const fmt = (n: number, d = 2) => n.toLocaleString('pt-PT', { minimumFractionDigits: d, maximumFractionDigits: d });
+export const fmt = (n: number, d = 2) => n.toLocaleString('pt-PT', { minimumFractionDigits: d, maximumFractionDigits: d, useGrouping: 'always' } as Intl.NumberFormatOptions);
 export const side = (d: 'long' | 'short') => (d === 'long' ? 'compra' : 'venda');
